@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>World Cities Test</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body{margin:0;display:flex;font-family:Arial}
+#panel{width:320px;padding:15px;background:#f2f2f2}
+#map{flex:1;height:100vh}
+button,input,select{width:100%;padding:10px;margin-top:5px}
+.correct{color:green;font-weight:bold}
+.wrong{color:red;font-weight:bold}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<div id="panel">
+<h2>🌍 World Cities Test</h2>
+
+<div id="login">
+<input id="name" placeholder="Student name">
+<select id="continent">
+<option value="all">All continents</option>
+<option value="asia">Asia</option>
+<option value="europe">Europe</option>
+<option value="americas">Americas</option>
+<option value="africa">Africa</option>
+<option value="oceania">Oceania</option>
+</select>
+<button onclick="startTest()">Start test</button>
+</div>
+
+<div id="game" class="hidden">
+<h3 id="question"></h3>
+<p>Question <span id="qnum">1</span> / 20</p>
+<p id="feedback"></p>
+</div>
+
+<div id="teacher" class="hidden">
+<h3>Teacher Panel</h3>
+<table id="results"></table>
+<button onclick="resetAll()">Reset all</button>
+</div>
+
+</div>
+
+<div id="map"></div>
+
+<script>
+const cities=[
+{name:"Tokyo",c:"asia",lat:35.6762,lng:139.6503},
+{name:"Shanghai",c:"asia",lat:31.2304,lng:121.4737},
+{name:"Beijing",c:"asia",lat:39.9042,lng:116.4074},
+{name:"Seoul",c:"asia",lat:37.5665,lng:126.978},
+{name:"Mumbai",c:"asia",lat:19.076,lng:72.8777},
+{name:"Delhi",c:"asia",lat:28.6139,lng:77.209},
+{name:"Bangkok",c:"asia",lat:13.7563,lng:100.5018},
+{name:"Jakarta",c:"asia",lat:-6.2088,lng:106.8456},
+{name:"London",c:"europe",lat:51.5072,lng:-0.1276},
+{name:"Paris",c:"europe",lat:48.8566,lng:2.3522},
+{name:"Berlin",c:"europe",lat:52.52,lng:13.405},
+{name:"Madrid",c:"europe",lat:40.4168,lng:-3.7038},
+{name:"Rome",c:"europe",lat:41.9028,lng:12.4964},
+{name:"Moscow",c:"europe",lat:55.7558,lng:37.6173},
+{name:"Istanbul",c:"europe",lat:41.0082,lng:28.9784},
+{name:"New York",c:"americas",lat:40.7128,lng:-74.006},
+{name:"Los Angeles",c:"americas",lat:34.0522,lng:-118.2437},
+{name:"Mexico City",c:"americas",lat:19.4326,lng:-99.1332},
+{name:"São Paulo",c:"americas",lat:-23.5505,lng:-46.6333},
+{name:"Rio de Janeiro",c:"americas",lat:-22.9068,lng:-43.1729},
+{name:"Buenos Aires",c:"americas",lat:-34.6037,lng:-58.3816},
+{name:"Lima",c:"americas",lat:-12.0464,lng:-77.0428},
+{name:"Cairo",c:"africa",lat:30.0444,lng:31.2357},
+{name:"Lagos",c:"africa",lat:6.5244,lng:3.3792},
+{name:"Kinshasa",c:"africa",lat:-4.4419,lng:15.2663},
+{name:"Johannesburg",c:"africa",lat:-26.2041,lng:28.0473},
+{name:"Nairobi",c:"africa",lat:-1.2921,lng:36.8219},
+{name:"Sydney",c:"oceania",lat:-33.8688,lng:151.2093},
+{name:"Melbourne",c:"oceania",lat:-37.8136,lng:144.9631}
+];
+
+let map=L.map("map").setView([20,0],2);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+let student,questions=[],current,step=0,score=0;
+
+cities.forEach(c=>{
+ let m=L.marker([c.lat,c.lng]).addTo(map);
+ m.on("click",()=>answer(c.name));
+});
+
+function startTest(){
+ student=name.value;
+ if(!student)return;
+ let cont=continent.value;
+ questions=cities.filter(c=>cont=="all"||c.c==cont).sort(()=>Math.random()-0.5).slice(0,20);
+ step=0;score=0;
+ login.classList.add("hidden");
+ game.classList.remove("hidden");
+ next();
+}
+
+function next(){
+ current=questions[step];
+ question.innerText="Find: "+current.name;
+ qnum.innerText=step+1;
+}
+
+function answer(n){
+ if(!current)return;
+ if(n==current.name){score++;feedback.innerHTML="<span class='correct'>Correct</span>";}
+ else{feedback.innerHTML="<span class='wrong'>Wrong</span>";}
+ step++;
+ if(step>=20){save();alert("Test finished! Score: "+score+"/20");}
+ else setTimeout(next,700);
+}
+
+function save(){
+ let data=JSON.parse(localStorage.getItem("tests")||"{}");
+ data[student]=score;
+ localStorage.setItem("tests",JSON.stringify(data));
+}
+
+document.addEventListener("keydown",e=>{
+ if(e.ctrlKey&&e.shiftKey&&e.key=="T"){
+  let d=JSON.parse(localStorage.getItem("tests")||"{}");
+  let h="<tr><th>Name</th><th>Score</th></tr>";
+  for(let s in d)h+=`<tr><td>${s}</td><td>${d[s]}</td></tr>`;
+  teacher.classList.remove("hidden");
+  results.innerHTML=h;
+ }
+});
+
+function resetAll(){localStorage.clear();location.reload();}
+</script>
+
+</body>
+</html>
